@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:graduation_project/Services/audio_service.dart';
 import 'package:graduation_project/Services/camera_service.dart';
 import 'package:graduation_project/components/button.dart';
 import 'package:graduation_project/components/record_button.dart';
@@ -18,11 +19,12 @@ class SoftSkillsInterview extends StatefulWidget {
 
 class _SoftSkillsInterviewState extends State<SoftSkillsInterview> {
   late CameraService _cameraService;
-
+  late AudioService _audioService ; 
   @override
   void initState() {
     super.initState();
     _cameraService = CameraService();
+    _audioService = AudioService();
     _cameraService.initializeCamera().catchError((e) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -35,9 +37,16 @@ class _SoftSkillsInterviewState extends State<SoftSkillsInterview> {
   int numbee = 0;
   List<String> gg = ["11", '22', "33"];
   bool isLastQuestion = false;
+  bool isRecording = false;
 
   final GlobalKey<CountdownTimerState> _timerKey =
       GlobalKey<CountdownTimerState>();
+//  bool isButtonRed = false ;
+// void togglebuttonColor(){
+// setState(() {
+//   isButtonRed = !isButtonRed ;
+// });
+// }
 
   @override
   Widget build(BuildContext context) {
@@ -145,31 +154,20 @@ class _SoftSkillsInterviewState extends State<SoftSkillsInterview> {
                   padding: const EdgeInsets.all(8.0),
                   child: Consumer<CameraService>(
                     builder: (context, service, child) {
-                      return RecordButton(
-                        userId: '123',
-                        isRecording: service.isRecording,
-                        onPressed: () async {
-                          if (service.isRecording) {
-                            if (numbee < gg.length - 1) {
-                              setState(() {
-                                numbee++;
-                              });
-                              return await service.stopRecording();
+                      return ElevatedButton(
+                          onPressed: () async {
+                            if (isRecording) {
+                              await _cameraService.startRecording();
+                              await _audioService.startRecording() ; 
                             } else {
-                              await service.startRecording();
-                              isLastQuestion = true;
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        Evaluation(time: time)),
-                              );
-                              return null;
+                              await _cameraService.stopRecording();
+                             await _audioService.stopRecording() ;
                             }
-                          }
-                          return null;
-                        },
-                      );
+                            setState(() {
+                              isRecording = !isRecording;
+                            });
+                          },
+                          child: Text(isRecording? "Start" : "Next"));
                     },
                   ),
                 ),
@@ -181,3 +179,28 @@ class _SoftSkillsInterviewState extends State<SoftSkillsInterview> {
     );
   }
 }
+// RecordButton(
+//                         userId: '123',
+//                         isRecording: service.isRecording,
+//                         onPressed: () async {
+//                           if (service.isRecording) {
+//                             if (numbee < gg.length - 1) {
+//                               setState(() {
+//                                 numbee++;
+//                               });
+//                               return await service.stopRecording();
+//                             } else {
+//                               await service.startRecording();
+//                               isLastQuestion = true;
+//                               Navigator.push(
+//                                 context,
+//                                 MaterialPageRoute(
+//                                     builder: (context) =>
+//                                         Evaluation(time: time)),
+//                               );
+//                               return null;
+//                             }
+//                           }
+//                           return null;
+//                         },
+//                       );

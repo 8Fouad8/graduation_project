@@ -10,9 +10,9 @@ class RecordButton extends StatefulWidget {
 
   const RecordButton({
     super.key,
-    required this.isRecording,
     required this.onPressed,
     required this.userId,
+    this.isRecording = false,
   });
 
   @override
@@ -22,7 +22,6 @@ class RecordButton extends StatefulWidget {
 
 class _RecordButtonState extends State<RecordButton> {
   bool isUploading = false;
-  double uploadProgress = 0.0;
 
   Future<void> handleUpload(String? path) async {
     if (path == null || !File(path).existsSync()) {
@@ -32,7 +31,6 @@ class _RecordButtonState extends State<RecordButton> {
 
     setState(() {
       isUploading = true;
-      uploadProgress = 0.0;
     });
 
     try {
@@ -47,7 +45,6 @@ class _RecordButtonState extends State<RecordButton> {
     } finally {
       setState(() {
         isUploading = false;
-        uploadProgress = 0.0;
       });
     }
   }
@@ -65,26 +62,17 @@ class _RecordButtonState extends State<RecordButton> {
           },
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-            backgroundColor: widget.isRecording ? Colors.red : Colors.green,
+            backgroundColor: widget.isRecording ? Colors.green : Colors.red,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(30),
             ),
           ),
           child: Text(
-            widget.isRecording ? 'Next' : 'Start',
+            widget.isRecording ? 'Start' : 'Next',
             style: const TextStyle(fontSize: 20, color: Colors.white),
           ),
         ),
-        if (isUploading)
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: Column(
-              children: [
-                const LinearProgressIndicator(),
-                Text("${(uploadProgress * 100).toStringAsFixed(0)}% uploaded"),
-              ],
-            ),
-          ),
+
       ],
     );
   }

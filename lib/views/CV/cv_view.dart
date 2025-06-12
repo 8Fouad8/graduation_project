@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:graduation_project/components/button.dart';
 import 'package:graduation_project/models/styles.dart';
-import 'package:graduation_project/views/track_view.dart';
+import 'package:graduation_project/views/CV/track_view.dart';
 
 class CvView extends StatelessWidget {
   const CvView({super.key});
@@ -21,7 +21,7 @@ class CvView extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SizedBox(height: 20),
-                Button(text: 'Recommend Track', navigate: TrackView(),spacer: true,),
+                Button(text: 'Recommend Track', navigate: FileUploadPage(),spacer: true,),
            ]),
         ));
   }

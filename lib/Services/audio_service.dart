@@ -1,39 +1,20 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_sound/flutter_sound.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:path/path.dart' as path;
+import 'package:record/record.dart';
+import 'package:path/path.dart' as p;
 
 class AudioService with ChangeNotifier {
-  final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
-  bool _isRecorderInitialized = false;
+   final AudioRecorder _recorder = AudioRecorder();
   bool _isRecording = false;
-
-  AudioService() {
-    _initializeRecorder();
-  }
-
-  Future<void> _initializeRecorder() async {
-    try {
-      await _recorder.openRecorder();
-      _isRecorderInitialized = true;
-    } catch (e) {
-      debugPrint('Failed to initialize recorder: $e');
-    }
-  }
+  String? _filePath;
 
   bool get isRecording => _isRecording;
-
-  Future<void> init() async {
-    await _requestPermissions();
-
-    await _recorder.openRecorder();
-    _isRecorderInitialized = true;
-    notifyListeners();
-  }
+  String? get filePath => _filePath;
 
   Future<void> _requestPermissions() async {
-    var status = await [
+    final status = await [
       Permission.microphone,
       Permission.storage,
     ].request();
@@ -44,41 +25,34 @@ class AudioService with ChangeNotifier {
   }
 
   Future<String?> startRecording() async {
-    if (!_isRecorderInitialized) await init();
+    if (!await _recorder.hasPermission()) {
+      await _requestPermissions();
+    }
 
-      const String dirPath = "/storage/emulated/0/Movies/MyAppVideos";
-      await Directory(dirPath).create(recursive: true);
+    final dir = await getExternalStorageDirectory();
+    final String dirPath = '${dir!.path}/audio_recordings';
+    await Directory(dirPath).create(recursive: true);
 
+    _filePath = p.join(dirPath, 'audio_${DateTime.now().millisecondsSinceEpoch}.opus');
 
-
-       String filePath = path.join(
-      dirPath,
-      'audio_${DateTime.now().millisecondsSinceEpoch}.opus',
-    );
-Codec codecCross;
-
-if (Platform.isAndroid) {
-  codecCross = Codec.opusWebM;
-} else if (Platform.isIOS) {
-  codecCross = Codec.opusCAF;
-} else {
-  throw Exception("Unsupported platform");
-}
-await _recorder.startRecorder(
-  toFile: filePath,
-  codec: codecCross,
+await _recorder.start(
+  const RecordConfig(
+    encoder: AudioEncoder.opus,
+    bitRate: 128000,
+    sampleRate: 44100,
+  ),
+  path: _filePath ?? '',
 );
-
 
     _isRecording = true;
     notifyListeners();
-    return filePath;
+    return _filePath;
   }
 
   Future<String?> stopRecording() async {
     if (!_isRecording) return null;
 
-    final String? path = await _recorder.stopRecorder();
+    final path = await _recorder.stop();
     _isRecording = false;
     notifyListeners();
 
@@ -87,11 +61,11 @@ await _recorder.startRecorder(
       return null;
     }
 
+    _filePath = path;
     return path;
   }
 
-  void disposeRecorder() {
-    _recorder.closeRecorder();
-    _isRecorderInitialized = false;
+  Future<void> disposeRecorder() async {
+    await _recorder.dispose();
   }
 }

@@ -11,6 +11,7 @@ class Button extends StatelessWidget {
     this.width,
     this.spacer,
     this.fontSize,
+    this.child
   });
 
   final VoidCallback? onpressed;
@@ -20,6 +21,7 @@ class Button extends StatelessWidget {
   final bool? spacer;
   final Color color;
   final double? fontSize;
+  final Widget? child;
 
   void _handlePress(BuildContext context) {
     if (onpressed != null) {

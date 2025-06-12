@@ -1,11 +1,13 @@
 import 'dart:io';
-import 'package:path/path.dart' as path;
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:video_compress/video_compress.dart';
 
 class CompressService {
-  /// Compresses a video and saves it to a permanent directory.
-  /// Returns the compressed [File], or throws an exception on failure.
   static Future<File> compressVideo(File originalFile) async {
+      String? _filePath;
+
+
     try {
       final MediaInfo? compressedVideo = await VideoCompress.compressVideo(
         originalFile.path,
@@ -18,17 +20,14 @@ class CompressService {
         throw Exception('Compression failed. Compressed video is null.');
       }
 
-      const String dirPath = "/storage/emulated/0/Movies/MyAppVideos";
-      await Directory(dirPath).create(recursive: true);
+    final dir = await getExternalStorageDirectory();
+    final String dirPath = '${dir!.path}/audio_recordings';
+    await Directory(dirPath).create(recursive: true);
 
-      final String finalPath = path.join(
-        dirPath,
-        'video_${DateTime.now().millisecondsSinceEpoch}.mp4',
-      );
+    _filePath = p.join(dirPath, 'audio_${DateTime.now().millisecondsSinceEpoch}.mp4');
 
-      final File savedFile = await File(compressedVideo.path!).copy(finalPath);
+      final File savedFile = await File(compressedVideo.path!).copy(_filePath);
 
-      // Clean up
       await VideoCompress.deleteAllCache();
 
       return savedFile;

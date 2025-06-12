@@ -1,11 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:graduation_project/Services/api_service.dart';
 import 'package:graduation_project/Services/audio_service.dart';
 import 'package:graduation_project/Services/camera_service.dart';
+import 'package:graduation_project/Services/compression_service.dart';
+import 'package:graduation_project/Services/upload_video_service.dart';
 import 'package:graduation_project/components/button.dart';
 import 'package:graduation_project/components/record_button.dart';
-import 'package:graduation_project/components/timer.dart';
 import 'package:graduation_project/models/styles.dart';
-import 'package:graduation_project/views/evaluation.dart';
 import 'package:camera/camera.dart';
 import 'package:provider/provider.dart';
 import 'dart:math' as math;
@@ -19,12 +21,28 @@ class SoftSkillsInterview extends StatefulWidget {
 
 class _SoftSkillsInterviewState extends State<SoftSkillsInterview> {
   late CameraService _cameraService;
-  late AudioService _audioService ; 
+  late AudioService _audioService;
+  bool isRecording = false;
+  String? videoPath;
+  String? audioPath;
+  String? interviewId;
+
+  int numbee = 0;
+  List<String> gg = ["11", '22', "33"];
+  bool isLastQuestion = false;
+
+  // @override
+  // void dispose() {
+  //   _cameraService.disposeController();
+  //   super.dispose();
+  // }
+
   @override
   void initState() {
     super.initState();
     _cameraService = CameraService();
     _audioService = AudioService();
+
     _cameraService.initializeCamera().catchError((e) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -32,25 +50,89 @@ class _SoftSkillsInterviewState extends State<SoftSkillsInterview> {
         );
       });
     });
+
+    _fetchInterviewId(); // 👈 fetch it here
   }
 
-  int numbee = 0;
-  List<String> gg = ["11", '22', "33"];
-  bool isLastQuestion = false;
-  bool isRecording = false;
+  Future<void> _fetchInterviewId() async {
+    try {
+      final api = InterviewApiService();
+      final response =
+          await api.getInterviewIdByUser("334"); // 🔁 use real user ID
+      setState(() {
+        interviewId = response.interviewId;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Interview ID error: $e")),
+      );
+    }
+  }
 
-  final GlobalKey<CountdownTimerState> _timerKey =
-      GlobalKey<CountdownTimerState>();
-//  bool isButtonRed = false ;
-// void togglebuttonColor(){
-// setState(() {
-//   isButtonRed = !isButtonRed ;
-// });
-// }
+Future<String?> _handleInterviewStep() async {
+    setState(() => isRecording = true);
+
+    try {
+      // Start recording both
+      await _audioService.startRecording();
+      await _cameraService.startRecording();
+
+      // You can wait here with delay or wait for user input to stop
+
+      await Future.delayed(
+          const Duration(seconds: 5)); // ⏳ Replace with your condition
+
+      final audioPath = await _audioService.stopRecording();
+      final videoPath = await _cameraService.stopRecording();
+
+      if (videoPath == null || audioPath == null) {
+        throw Exception("Recording failed");
+      }
+
+      // Compress video
+      final compressedVideo =
+          await CompressService.compressVideo(File(videoPath));
+
+      // Conditional upload
+      if (numbee % 2 == 1) {
+        await UploadService.uploadCompressedVideo(
+          file: compressedVideo,
+          userId: "334",
+        );
+      }
+
+      // Send to API
+      final api = InterviewApiService();
+      if (interviewId == null) {
+        throw Exception("Interview ID not loaded.");
+      }
+
+      final nextQuestion = await api.sendNextQuestion(
+        interviewId: interviewId!,
+        audioFile: File(audioPath),
+        videoFile: compressedVideo,
+      );
+
+      setState(() {
+        gg.add(nextQuestion.nextQuestionText); // Append next question
+        numbee++;
+        isLastQuestion = numbee >= gg.length; // Set limit here
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    } finally {
+      setState(() => isRecording = false);
+    }
+  return videoPath; // ✅ make sure videoPath is assigned earlier
+
+  }
 
   @override
   Widget build(BuildContext context) {
-    int time = 0;
+    final String userId = "1234";
+
     double width = MediaQuery.of(context).size.width * 0.95;
     double height = MediaQuery.of(context).size.height * 0.25;
 
@@ -90,14 +172,11 @@ class _SoftSkillsInterviewState extends State<SoftSkillsInterview> {
                       text: "Ready",
                       fontSize: 22,
                       width: 90,
-                      onpressed: () {
-                        _timerKey.currentState?.startTimer();
-                      },
+                      onpressed: () {},
                     ),
                     const Expanded(child: SizedBox()),
 
                     // Countdown Timer Widget
-                    CountdownTimer(key: _timerKey),
                   ],
                 ),
               ),
@@ -153,21 +232,11 @@ class _SoftSkillsInterviewState extends State<SoftSkillsInterview> {
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Consumer<CameraService>(
-                    builder: (context, service, child) {
-                      return ElevatedButton(
-                          onPressed: () async {
-                            if (isRecording) {
-                              await _cameraService.startRecording();
-                              await _audioService.startRecording() ; 
-                            } else {
-                              await _cameraService.stopRecording();
-                             await _audioService.stopRecording() ;
-                            }
-                            setState(() {
-                              isRecording = !isRecording;
-                            });
-                          },
-                          child: Text(isRecording? "Start" : "Next"));
+                    builder: (context, service, _) {
+                      return RecordButton(
+                        userId: userId,
+                        onPressed: _handleInterviewStep,
+                      );
                     },
                   ),
                 ),
@@ -179,28 +248,18 @@ class _SoftSkillsInterviewState extends State<SoftSkillsInterview> {
     );
   }
 }
-// RecordButton(
-//                         userId: '123',
-//                         isRecording: service.isRecording,
-//                         onPressed: () async {
-//                           if (service.isRecording) {
-//                             if (numbee < gg.length - 1) {
-//                               setState(() {
-//                                 numbee++;
-//                               });
-//                               return await service.stopRecording();
-//                             } else {
-//                               await service.startRecording();
-//                               isLastQuestion = true;
-//                               Navigator.push(
-//                                 context,
-//                                 MaterialPageRoute(
-//                                     builder: (context) =>
-//                                         Evaluation(time: time)),
-//                               );
-//                               return null;
-//                             }
-//                           }
-//                           return null;
-//                         },
-//                       );
+
+                      // return ElevatedButton(
+                      //     onPressed: () async {
+                      //       if (isRecording) {
+                      //         await _cameraService.startRecording();
+                      //         await _audioService.startRecording() ; 
+                      //       } else {
+                      //         await _cameraService.stopRecording();
+                      //        await _audioService.stopRecording() ;
+                      //       }
+                      //       setState(() {
+                      //         isRecording = !isRecording;
+                      //       });
+                      //     },
+                      //     child: Text(isRecording? "Next" : "Start"));

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:graduation_project/components/button.dart';
 import 'package:graduation_project/components/curved_box.dart';
 import 'package:graduation_project/models/styles.dart';
-// import 'package:graduation_project/views/Auth/login_view.dart';
+import 'package:graduation_project/views/Auth/login_view.dart';
 import 'package:graduation_project/views/Auth/signup_view.dart';
 import 'package:graduation_project/views/hub_view.dart';
 
@@ -31,7 +31,7 @@ class HomeView extends StatelessWidget {
             const CurvedBox(height: .6,topLeft: true,topRight: true, children: [
               Button(text: 'sign up', navigate: Signup()),
               SizedBox(height: 10),
-              Button(text: 'sign in', navigate: HubView()),
+              Button(text: 'sign in', navigate: Login()),
             ]),
           ],
         ),

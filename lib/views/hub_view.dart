@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:graduation_project/components/button.dart';
 import 'package:graduation_project/models/styles.dart';
-import 'package:graduation_project/views/cv_view.dart';
+import 'package:graduation_project/views/CV/cv_view.dart';
 import 'package:graduation_project/views/interview_path_view.dart';
 class HubView extends StatelessWidget {
   const HubView({super.key});
@@ -22,6 +22,11 @@ class HubView extends StatelessWidget {
         child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Text(
+            //   "Welcome, ${user.name}",
+            //   style: Styles.HeaderText(),
+            // ),
+            SizedBox(height: 20),
             Button(text: 'Analyse my CV', navigate: CvView(),spacer: true,),
             SizedBox(height: 20),
             Button(text: 'Make an Interview', navigate: InterviewPathView(),spacer: true,),

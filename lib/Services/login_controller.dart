@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 class LoginController {
   static final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: "https://mentorai-be-a9c7hnevhpgzh0fv.canadacentral-01.azurewebsites.net",
+      baseUrl: "https://mentorai0-dec3dscpcha4gng2.uaenorth-01.azurewebsites.net/",
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
       headers: {

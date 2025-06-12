@@ -1,5 +1,5 @@
 import 'dart:io';
-import "package:camera/camera.dart";
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -20,7 +20,7 @@ class CameraService with ChangeNotifier {
     _controller = CameraController(
       frontCamera,
       ResolutionPreset.low,
-      enableAudio: true,
+      enableAudio: false,
     );
 
     await _controller!.initialize();
@@ -28,38 +28,33 @@ class CameraService with ChangeNotifier {
   }
 
   Future<void> _requestPermissions() async {
-    Map<Permission, PermissionStatus> statuses = await [
+    final statuses = await [
       Permission.camera,
       Permission.microphone,
       Permission.storage,
     ].request();
 
     if (statuses.values.any((status) => !status.isGranted)) {
-      throw Exception('Permissions are required to continue');
+      throw Exception('Camera, microphone, and storage permissions are required.');
     }
   }
 
   Future<void> startRecording() async {
-    if (!_controller!.value.isInitialized) return;
+    if (_controller == null || !_controller!.value.isInitialized) return;
     await _controller!.startVideoRecording();
     _isRecording = true;
     notifyListeners();
   }
 
   Future<String?> stopRecording() async {
-    if (!_controller!.value.isRecordingVideo) return null;
+    if (_controller == null || !_controller!.value.isRecordingVideo) return null;
 
     final XFile file = await _controller!.stopVideoRecording();
     _isRecording = false;
     notifyListeners();
 
-    final File originalFile = File(file.path);
-
-    if (!await originalFile.exists()) {
-      debugPrint("❌ No file selected or file does not exist ❤️");
-      return null;
-    }
-    return originalFile.path;
+    final File videoFile = File(file.path);
+    return videoFile.existsSync() ? videoFile.path : null;
   }
 
   void disposeController() {

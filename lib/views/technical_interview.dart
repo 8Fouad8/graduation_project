@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:graduation_project/components/button.dart';
 import 'package:graduation_project/components/timer.dart';
 import 'package:graduation_project/models/styles.dart';
-import 'package:graduation_project/views/evaluation.dart';
+import 'package:graduation_project/views/evaluation_interview.dart';
 
 class TechnicalInterview extends StatefulWidget {
   const TechnicalInterview({super.key});
